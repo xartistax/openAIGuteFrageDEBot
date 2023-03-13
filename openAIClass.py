@@ -1,5 +1,5 @@
 
-import os
+
 
 import openai
 
@@ -15,7 +15,7 @@ class OpenAi:
 
 
     def checkAnswer(self, question, question_body, url):
-        blacklist = ["KI", "Als KI", "Als künstliche Intelligenz", "künstliche Intelligenz", "Als AI", "AI"]
+        blacklist = ["KI", "Als KI", "Als künstliche Intelligenz", "künstliche Intelligenz", "Künstliche Intelligenz", "Als AI", "AI", "künstlicher Intelligenzassistent", "Intelligenzassistent", "digitale Entitität"]
 
         completion = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
