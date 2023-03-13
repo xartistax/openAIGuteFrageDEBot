@@ -12,10 +12,10 @@ class Login(seleniumWebdriverClass.Test):
 
     def login(self):
         try:
-            wait = seleniumWebdriverClass.Test().wait(10)
+            wait = seleniumWebdriverClass.Test().wait(120)
             loginButton = wait.until(ec.presence_of_element_located((By.CSS_SELECTOR, '#masthead-toggle-login button')))
             loginButton.click()
-            wait = seleniumWebdriverClass.Test().wait(10)
+            wait = seleniumWebdriverClass.Test().wait(120)
             inputUsername = wait.until(ec.presence_of_element_located((By.CSS_SELECTOR, "#loginform_username_1")))
             inputPassword = wait.until(ec.presence_of_element_located((By.CSS_SELECTOR, "#loginform_password2")))
             submitButton = wait.until(
