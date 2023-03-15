@@ -7,6 +7,7 @@ from termcolor import colored
 
 import guteFrageClass
 from decouple import config
+import sys
 
 
 class OpenAi:
