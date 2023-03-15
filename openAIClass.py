@@ -11,10 +11,13 @@ from decouple import config
 
 class OpenAi:
 
-    openai.api_key = config('OPEN_API')
+    try:
+        openai.api_key = config('OPEN_API')
+    except Exception as e:
+        exit(e)
 
 
-    def checkAnswer(self, question, question_body, url):
+    def checkAnswer(self, question, question_body):
         blacklist = ["KI", "Als KI", "Als künstliche Intelligenz", "künstliche Intelligenz", "Künstliche Intelligenz", "Als AI", "AI", "künstlicher Intelligenzassistent", "Intelligenzassistent", "digitale Entitität"]
 
         completion = openai.ChatCompletion.create(
@@ -29,9 +32,7 @@ class OpenAi:
         answer = completion.choices[0].message.content.strip('\n')
 
         if any([x in answer for x in blacklist]):
-            print('Wait 30 Seconds and refresh the pasge because Answer is containin blacklisted words')
-            guteFrageClass.guteFrage().refresh_try_again(10, url)
+            return 'blacklist'
 
         else:
-            print(colored('AI does have an answer !', 'green'))
             return answer

@@ -12,167 +12,192 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.support import expected_conditions as ec
 import sys
 from selenium.webdriver.support.ui import Select
-
-
+from termcolor import colored
 
 class guteFrage:
 
 
 
-    def check_question(self, home_url):
-        wait = seleniumWebdriverClass.Test().wait(100)
-        elements = wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, "article.ListingElement > a")))
+    def answeringBot(self, home_url):
 
-        question = elements[0] ## The first question will be answerd
-        question_title = question.find_element(By.CLASS_NAME, 'Question-title')
-        question_body = question.find_element(By.CLASS_NAME, "ContentBody")
-
-        try:
-
-            return openAIClass.OpenAi().checkAnswer(question_title.text,question_body.text, home_url)
-
-            #return 'answer is here'
-
-
-
-        except Exception as e:
-            print('Check question failed')
-            print(e)
-
-            self.answeingBot(home_url)
-
-
-
-
-
-
-
-    def answeingBot(self, home_url):
-        seleniumWebdriverClass.Test().driver.get(home_url)
-        randNumber = random.randint(10, 120)
         func_name = sys._getframe().f_code.co_name
-        print(func_name + " START")
-        if self.wait_until_FirstQuestion_is_no_poll(home_url) == False:
-            valid_answer = self.check_question(home_url)
-            self.open_question(home_url)
-            self.clickOnAnswerButton()
-            self.answoring_question(valid_answer, home_url)
-            self.send_the_answer(home_url)
-            self.writeUrlToFile()
+        questions = self.get_all_questions()
+        sorted_questions = self.sort_questions(questions)
+        shuffled_questions = self.shuffle_questions (sorted_questions)
+        answerd_questions = self.answering_all_sorted_questions(shuffled_questions)
+        answerd_questions_clean = self.clean_blacklist_answers(answerd_questions)
+
+        self.post_all_answers(answerd_questions_clean, home_url)
 
 
 
+        print(colored(func_name.upper() + " done !", 'green'))
 
-            seleniumWebdriverClass.Test().go_to_url(home_url)
-            print(func_name + " is done! now wait " + str(randNumber) + " sec and go on")
-            time.sleep(randNumber)
-            print(func_name + " STOP")
-            return
+    
+
+    def shuffle_questions(self, questions):
+        random.shuffle(questions)
+        func_name = sys._getframe().f_code.co_name
+        print(colored(func_name.upper() + " done !", 'green'))
+        return questions
+        
 
 
-
-
-    def wait_until_FirstQuestion_is_no_poll(self, home_url):
+    def get_all_questions(self):
         wait = seleniumWebdriverClass.Test().wait(120)
-        try:
-            elements = wait.until(ec.presence_of_all_elements_located((By.CSS_SELECTOR, 'article.ListingElement > a')))
-        except:
-            self.wait_until_FirstQuestion_is_no_poll(home_url)
+        elements = wait.until(ec.presence_of_all_elements_located((By.CSS_SELECTOR, 'article.ListingElement > a')))
+        func_name = sys._getframe().f_code.co_name
+        print(colored(func_name.upper() + " done !", 'green'))
+        return elements
 
-        try:
-            elements[0].find_element(By.CLASS_NAME, 'ListingElement-poll')
-            print('first is a PollQuestion - refresh page in 10 sec and try again')
-            self.refresh_try_again(10, home_url)
-        except NoSuchElementException:
+    def question_count(self, questionList):
+        func_name = sys._getframe().f_code.co_name
+        print(colored(func_name.upper() + " done !", 'green'))
+        return len(questionList)
+
+
+
+
+    
+    
+
+    def sort_questions(self, questions):
+        func_name = sys._getframe().f_code.co_name
+        sorted_questions = []
+
+        for question in questions:
+
+            isPoll = len(question.find_elements(By.CLASS_NAME, 'ListingElement-poll')) > 0
+            isImage = len(question.find_elements(By.CLASS_NAME, 'ListingElement-image')) > 0
+
+            if isPoll == False and isImage == False:
+
+
+                question_title = question.find_element(By.CLASS_NAME, 'Question-title').text
+                question_body = question.find_element(By.CLASS_NAME, "ContentBody").text
+                question_link = question.get_attribute('href')
+                dictionary = {
+                    "title" : question_title ,
+                    "question" : question_body ,
+                    "url" : question_link
+                    }
+                sorted_questions.append(dictionary)
+
+        print(colored(func_name.upper() + " done !", 'green'))
+        return sorted_questions
+
+
+
+    def get_amount(self, max):
+        while True:
+            amount = input("Es gibt " + str(max) + " Fragen zu beantworten! Wieviel sollen beantwortet werden? ")
             try:
-                elements[0].find_element(By.CLASS_NAME, 'ListingElement-image')
-                print('first is a ImageQuestion - refresh page in 10 sec and try again')
-                self.refresh_try_again(10, home_url)
-            except NoSuchElementException:
-                return False
+                val = int(amount)
+                if val > max or val == 0:
+                    self.get_amount(max)
+                else:
+                    return val
+                break
+            except ValueError:
+                print("Muss eine Zahl seine")
 
 
-
-
-    def open_question(self, url):
-        try:
-            wait = seleniumWebdriverClass.Test().wait(120)
-            elements = wait.until(ec.visibility_of_all_elements_located((By.CSS_SELECTOR, "article.ListingElement > a")))
-            elements[0].click()
-            func_name = sys._getframe().f_code.co_name
-            print(func_name + " is done!")
-        except:
-            self.answeingBot(url)
-
-
-
-    def refresh_try_again(self, delay, url):
-        time.sleep(delay)
-        seleniumWebdriverClass.Test().driver.get(url)
-        self.answeingBot(url)
+    def answering_all_sorted_questions(self, questions):
         func_name = sys._getframe().f_code.co_name
-        print(func_name + " is done!")
+        answerd_questions = []
+        i = 1
 
-    def clickOnAnswerButton(self,):
-        wait = seleniumWebdriverClass.Test().wait(120)
-        questionButton = wait.until(ec.presence_of_element_located((By.CSS_SELECTOR, ".QuestionActionBar > button")))
-        questionButton.click()
+
+
+        amount = self.get_amount(len(questions))
+
+        for question in questions[:amount]:
+            print(colored("✔ Question " + str(i) + " of " + str(amount) + " - start!...", 'cyan'))
+            answer = openAIClass.OpenAi().checkAnswer(question['title'],question['question'])
+            dictionary = {
+                "title" : question['title'] ,
+                "question" : question['question'] ,
+                "url" : question['url'], 
+                "answer" : answer
+                }
+            answerd_questions.append(dictionary)
+            print(colored("✔ Question " + str(i) + " of " + str(amount) + " - done !", 'cyan'))
+            i +=1
+
+        
+        return answerd_questions
+
+
+        
+
+        
+
+
+    def clean_blacklist_answers(self, questions):
         func_name = sys._getframe().f_code.co_name
-        print(func_name + " is done!")
+        clean_answers = []
 
-    def answoring_question(self, answer, url):
+  
+        for question in questions:
+            if question['answer'] != 'blacklist':
+                clean_answers.append(question)
+        
+        if len(clean_answers) == 0:
+            exit( print(colored("NACH BLACKLISTCHECK BLIEBEN KEINE FRAGEN MEHR ÜBRIG - VERSUCHS NOCHMAL", 'magenta')) )
+    
         func_name = sys._getframe().f_code.co_name
-        try:
-            wait = seleniumWebdriverClass.Test().wait(120)
-            answerField = wait.until(ec.presence_of_element_located((By.CSS_SELECTOR, ".TextEditor.TextEditor--answer .ql-container.ql-snow .ql-editor")))
-        except:
-            self.answeingBot(url)
+        print(colored(func_name.upper() + "NACH BLACKLISTCHECK BLIEBEN NOCH " + str(len(clean_answers))+ " ÜBRIG", 'magenta'))
+        print(colored(func_name.upper() + " done !", 'green'))
 
-        if len(answer)==0:
-            self.answeingBot()
-            print(func_name + " start allover!")
-        else:
-            answerField.send_keys(answer)
-            # answerField.send_keys('answer here!')
-            print(func_name + " is done!")
-
-    def answer_expertise_select(self):
-        try:
-            dropdown = Select(seleniumWebdriverClass.Test().driver.find_element(By.ID, 'answer-expertise-select'))
-            dropdown.select_by_value('PersonalExperience')
-            func_name = sys._getframe().f_code.co_name
-            print(func_name + " is done!")
-        except:
-            Select(seleniumWebdriverClass.Test().driver.find_element(By.ID, 'answer-expertise-select').click())
-            wait = seleniumWebdriverClass.Test().wait(120)
-            answerField = wait.until(ec.presence_of_element_located((By.XPATH, "/html/body/div[8]/div/div[6]/button")))
-            answerField.click()
-            print(func_name + " is done!")
-
-    def send_the_answer(self, url):
-        try:
-            button = seleniumWebdriverClass.Test().driver.find_element(By.CSS_SELECTOR, '.WriteAnswerActionBar-submit button')
-            button.click()
-            func_name = sys._getframe().f_code.co_name
-            print(func_name + " is done!")
-        except:
-            self.answeingBot(url)
-
+        return clean_answers
+        
 
     def writeUrlToFile(self):
         with open('log.txt', 'a+') as the_file:
             the_file.write( self.currentDatetime() + ' - ' + self.currentUrl() + '\n')
-            #the_file.write( 'okokokokkoko \n')
-
         func_name = sys._getframe().f_code.co_name
-        print(func_name + " is done!")
+        print(colored(func_name.upper() + " done !", 'green'))
 
     def currentDatetime(self):
         current_time = datetime.datetime.now()
+        
         return str(current_time)
 
     def currentUrl(self):
         current_url = seleniumWebdriverClass.Test().driver.current_url
         return current_url
 
+    
+    def post_all_answers(self, questions, home_url):
 
+        
+        i = 1
+
+        for question in questions:
+            delay = random.randint(30,120 )
+            delay_two = random.randint(5, 12 )
+            func_name = sys._getframe().f_code.co_name
+            seleniumWebdriverClass.Test().go_to_url(question['url'])
+            wait = seleniumWebdriverClass.Test().wait(10)
+            time.sleep(delay_two)
+            questionButton = wait.until(ec.presence_of_element_located((By.CSS_SELECTOR, ".QuestionActionBar > button")))
+            questionButton.click()
+            answerField = wait.until(ec.presence_of_element_located((By.CSS_SELECTOR, ".TextEditor.TextEditor--answer .ql-container.ql-snow .ql-editor")))
+            answerField.send_keys(question['answer'])
+            button = seleniumWebdriverClass.Test().driver.find_element(By.CSS_SELECTOR, '.WriteAnswerActionBar-submit button')
+            button.click()
+            self.writeUrlToFile()
+            
+            seleniumWebdriverClass.Test().go_to_url(home_url)
+
+
+            
+            print((colored(func_name.upper() + " Posted " + str(i) + " Answer of "+ str(len(questions)) +"! delay before next post : " + str(delay) + " seconds"   ,'red', 'on_black', ['bold', 'blink'])))
+            print((colored(func_name.upper() + " done !", 'green')))
+
+            i +=1
+
+            time.sleep(delay)
+
+
+        
