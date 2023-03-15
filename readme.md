@@ -1,4 +1,4 @@
-# Project Title
+# Python ChatGPT Answering-bot (gutefrage.net)
 
 A Simple Answering Bot for Gute-Frage.net
 
@@ -12,6 +12,7 @@ The Bot is scraping all Questions from the first page. Cleans all questions from
 
 * Programm is running with Python. All required dependencys are in requirements.txt
 * Python > 3.0
+* [openai.com - ChatGPT API Key](https://platform.openai.com/account/api-keys)
 
 ### Installing
 
@@ -32,10 +33,8 @@ Run the main.py File
 
 ## Authors
 
-Contributors names and contact info
-
-Demian Füglistaler  
-ex. [@demian_1712](https://instagram.com/demian_1712?)
+Artista  
+[@demian_1712](https://instagram.com/demian_1712?)
 
 ## Version History
 
